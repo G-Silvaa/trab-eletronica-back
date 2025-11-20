@@ -9,7 +9,8 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 const swaggerUi = require('swagger-ui-express');
 const swaggerDoc = require('../docs/swagger.json');
 const emailService = require('./services/email');
-const whatsappService = require('./services/whatsapp');
+// WhatsApp desativado; reative importando o serviço e ajustando .env se necessário.
+// const whatsappService = require('./services/whatsapp');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,7 @@ const history = [];
 app.use(cors());
 app.use(express.json());
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 function deriveStatus(temp, providedStatus) {
   if (providedStatus) return providedStatus;
@@ -53,10 +55,10 @@ app.post('/temperatura', async (req, res) => {
       emailService
         .sendTemperatureAlert(entry)
         .catch((err) => console.error('Falha ao enviar alerta de e-mail:', err.message));
-
-      whatsappService
-        .sendWhatsAppAlert(entry)
-        .catch((err) => console.error('Falha ao enviar alerta de WhatsApp:', err.message));
+      // WhatsApp desativado; reative se precisar:
+      // whatsappService
+      //   .sendWhatsAppAlert(entry)
+      //   .catch((err) => console.error('Falha ao enviar alerta de WhatsApp:', err.message));
     }
 
     return res.json({ ok: true });
@@ -97,16 +99,20 @@ app.post('/alerta/whatsapp', async (req, res) => {
     if (!message) {
       return res.status(400).json({ error: 'Campo \"message\" eh obrigatorio.' });
     }
-    await whatsappService.sendManualMessage(message);
-    return res.json({ sent: true });
+    // WhatsApp desativado; responda como não suportado.
+    return res.status(501).json({ error: 'WhatsApp desativado' });
   } catch (e) {
     console.error(e);
-    return res.status(500).json({ error: 'Erro ao enviar WhatsApp' });
+    return res.status(500).json({ error: 'Erro ao enviar WhatsApp (desativado)' });
   }
 });
 
 app.get('/status', (req, res) => {
   return res.json({ api: 'online', uptime: Math.floor(process.uptime()) });
+});
+
+app.get('/', (req, res) => {
+  return res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 app.use((req, res) => {

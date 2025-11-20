@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel de Temperatura</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #111827;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --accent: #6366f1;
+      --accent-2: #22d3ee;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --ok: #22c55e;
+      --border: #1e293b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(34,211,238,0.08), transparent 25%),
+                  radial-gradient(circle at 80% 10%, rgba(99,102,241,0.12), transparent 30%),
+                  radial-gradient(circle at 50% 80%, rgba(14,165,233,0.1), transparent 35%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .muted { color: var(--muted); }
+    .card {
+      background: linear-gradient(145deg, rgba(17,24,39,0.96), rgba(15,23,42,0.96));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .badge.ok { background: rgba(34,197,94,0.12); color: var(--ok); border: 1px solid rgba(34,197,94,0.3); }
+    .badge.warn { background: rgba(245,158,11,0.12); color: var(--warn); border: 1px solid rgba(245,158,11,0.4); }
+    .badge.danger { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.35); }
+    .big {
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin: 4px 0;
+    }
+    .pill {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    th { color: var(--muted); font-weight: 600; }
+    tr:hover td { background: rgba(255,255,255,0.03); }
+    .text-right { text-align: right; }
+    .status {
+      text-transform: capitalize;
+      font-weight: 700;
+    }
+    .status.ok { color: var(--ok); }
+    .status.warn { color: var(--warn); }
+    .status.danger { color: var(--danger); }
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(34,211,238,0.2));
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+    .error {
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(239,68,68,0.35);
+      background: rgba(239,68,68,0.07);
+      color: var(--danger);
+      font-size: 13px;
+    }
+    .meta {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .pagination {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .page-btn {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    @media (max-width: 640px) {
+      header { flex-direction: column; align-items: flex-start; }
+      .big { font-size: 36px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <div class="title">Painel de Temperatura</div>
+        <div class="muted">Monitoramento em tempo real e histórico recente</div>
+      </div>
+      <div class="header-actions">
+        <span class="pill" id="uptime">Uptime: --s</span>
+        <button class="btn" id="btnRefresh">Atualizar agora</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <div class="muted">Temperatura atual</div>
+        <div class="big" id="currentTemp">--</div>
+        <div class="badge" id="currentStatus">--</div>
+        <div class="muted" id="currentTimestamp" style="margin-top:6px;">--</div>
+      </div>
+      <div class="card">
+        <div class="muted">Status da API</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+          <span class="badge ok" id="apiStatus">Online</span>
+        </div>
+        <div class="muted" id="apiInfo" style="margin-top:8px;">--</div>
+      </div>
+      <div class="card">
+        <div class="muted">Resumo do mês</div>
+        <div class="big" id="monthAvg">--</div>
+        <div class="meta" id="monthMeta">Sem dados.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <div class="title" style="font-size:18px;">Histórico recente</div>
+        <span class="pill" id="historyCount">-- registros</span>
+      </div>
+      <div id="historyError" class="error" style="display:none;"></div>
+      <table aria-label="Histórico de temperaturas">
+        <thead>
+          <tr>
+            <th>Momento</th>
+            <th class="text-right">Temperatura</th>
+            <th class="text-right">Status</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody">
+          <tr><td colspan="3" class="muted">Carregando...</td></tr>
+        </tbody>
+      </table>
+      <div class="meta">
+        <span id="historyInfo">Atualiza a cada 30 minutos.</span>
+      </div>
+      <div class="pagination">
+        <button class="page-btn" id="prevPage">Anterior</button>
+        <span class="muted" id="pageLabel">-- / --</span>
+        <button class="page-btn" id="nextPage">Próxima</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const statusBadge = (status) => {
+      const cls = status === 'alto' ? 'danger' : status === 'moderado' ? 'warn' : 'ok';
+      return { text: status, cls };
+    };
+
+    async function fetchJson(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    }
+
+    async function loadCurrent() {
+      try {
+        const data = await fetchJson('/temperatura/atual');
+        document.getElementById('currentTemp').textContent = `${data.temp.toFixed(1)}°C`;
+        const { text, cls } = statusBadge(data.status);
+        const el = document.getElementById('currentStatus');
+        el.textContent = text;
+        el.className = `badge ${cls}`;
+        document.getElementById('currentTimestamp').textContent = new Date(data.timestamp).toLocaleString();
+      } catch (e) {
+        document.getElementById('currentTemp').textContent = '--';
+        const el = document.getElementById('currentStatus');
+        el.textContent = 'sem dados';
+        el.className = 'badge warn';
+        document.getElementById('currentTimestamp').textContent = '';
+      }
+    }
+
+    async function loadHistory() {
+      const errorBox = document.getElementById('historyError');
+      const body = document.getElementById('historyBody');
+      try {
+        historyCache = await fetchJson('/temperatura/historico');
+        document.getElementById('historyCount').textContent = `${historyCache.length} registros`;
+        renderHistory();
+        renderMonthSummary();
+        errorBox.style.display = 'none';
+      } catch (e) {
+        errorBox.textContent = 'Erro ao carregar histórico.';
+        errorBox.style.display = 'block';
+      }
+    }
+
+    async function loadStatus() {
+      const badge = document.getElementById('apiStatus');
+      const info = document.getElementById('apiInfo');
+      const up = document.getElementById('uptime');
+      try {
+        const data = await fetchJson('/status');
+        badge.textContent = 'Online';
+        badge.className = 'badge ok';
+        info.textContent = `Uptime: ${data.uptime}s`;
+        up.textContent = `Uptime: ${data.uptime}s`;
+      } catch {
+        badge.textContent = 'Offline';
+        badge.className = 'badge danger';
+        info.textContent = 'API fora do ar';
+      }
+    }
+
+    // History pagination and monthly summary
+    const pageSize = 15;
+    let historyCache = [];
+    let currentPage = 1;
+
+    function renderMonthSummary() {
+      const meta = document.getElementById('monthMeta');
+      const avgEl = document.getElementById('monthAvg');
+      if (!historyCache.length) {
+        avgEl.textContent = '--';
+        meta.textContent = 'Sem dados.';
+        return;
+      }
+      const now = new Date();
+      const thisMonth = historyCache.filter((h) => {
+        const d = new Date(h.timestamp);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+      if (!thisMonth.length) {
+        avgEl.textContent = '--';
+        meta.textContent = 'Nenhum registro neste mês.';
+        return;
+      }
+      const temps = thisMonth.map((t) => Number(t.temp));
+      const avg = temps.reduce((a, b) => a + b, 0) / temps.length;
+      const max = Math.max(...temps);
+      const min = Math.min(...temps);
+      avgEl.textContent = `${avg.toFixed(1)}°C`;
+      meta.textContent = `Registros: ${thisMonth.length} · Máx: ${max.toFixed(1)}°C · Mín: ${min.toFixed(1)}°C`;
+    }
+
+    function renderHistory() {
+      const body = document.getElementById('historyBody');
+      const totalPages = Math.max(1, Math.ceil(historyCache.length / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (!historyCache.length) {
+        body.innerHTML = '<tr><td colspan="3" class="muted">Nenhum dado ainda.</td></tr>';
+      } else {
+        const start = (currentPage - 1) * pageSize;
+        const items = historyCache.slice().reverse().slice(start, start + pageSize);
+        body.innerHTML = items
+          .map((item) => {
+            const { text, cls } = statusBadge(item.status);
+            return `<tr>
+              <td>${new Date(item.timestamp).toLocaleString()}</td>
+              <td class="text-right">${Number(item.temp).toFixed(1)}°C</td>
+              <td class="text-right status ${cls}">${text}</td>
+            </tr>`;
+          })
+          .join('');
+      }
+      document.getElementById('pageLabel').textContent = `${currentPage} / ${Math.max(1, Math.ceil(historyCache.length / pageSize))}`;
+      document.getElementById('prevPage').disabled = currentPage <= 1;
+      document.getElementById('nextPage').disabled = currentPage >= Math.max(1, Math.ceil(historyCache.length / pageSize));
+    }
+
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (currentPage > 1) currentPage -= 1;
+      renderHistory();
+    });
+    document.getElementById('nextPage').addEventListener('click', () => {
+      const totalPages = Math.max(1, Math.ceil(historyCache.length / pageSize));
+      if (currentPage < totalPages) currentPage += 1;
+      renderHistory();
+    });
+
+    async function refreshFast() {
+      await Promise.all([loadCurrent(), loadStatus()]);
+    }
+
+    async function refreshSlow() {
+      await loadHistory();
+    }
+
+    document.getElementById('btnRefresh').addEventListener('click', () => {
+      refreshFast();
+      refreshSlow();
+    });
+
+    // Initial loads
+    refreshFast();
+    refreshSlow();
+
+    // Fast loop: current + status (5s)
+    setInterval(refreshFast, 5000);
+    // Slow loop: history + monthly (30 min)
+    setInterval(refreshSlow, 30 * 60 * 1000);
+  </script>
+</body>
+</html>
