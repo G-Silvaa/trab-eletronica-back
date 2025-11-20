@@ -1,0 +1,159 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "ESP32 Temperature API",
+    "version": "1.0.0",
+    "description": "API para leituras de temperatura do ESP32 e alertas via e-mail/WhatsApp."
+  },
+  "servers": [
+    { "url": "http://localhost:3000" }
+  ],
+  "paths": {
+    "/temperatura": {
+      "post": {
+        "summary": "Registrar temperatura atual",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "temp": { "type": "number", "example": 31.8 },
+                  "status": { "type": "string", "example": "alto" }
+                },
+                "required": ["temp"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Registro salvo", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } }, "example": { "ok": true } } } },
+          "400": { "description": "Erro de validacao" }
+        }
+      }
+    },
+    "/temperatura/atual": {
+      "get": {
+        "summary": "Obter leitura atual",
+        "responses": {
+          "200": {
+            "description": "Leitura atual",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "temp": { "type": "number" },
+                    "status": { "type": "string" },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                },
+                "example": { "temp": 31.8, "status": "alto", "timestamp": "2025-11-19T14:22:00Z" }
+              }
+            }
+          },
+          "404": { "description": "Sem leitura ate agora" }
+        }
+      }
+    },
+    "/temperatura/historico": {
+      "get": {
+        "summary": "Listar historico de leituras",
+        "responses": {
+          "200": {
+            "description": "Historico completo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "temp": { "type": "number" },
+                      "status": { "type": "string" },
+                      "timestamp": { "type": "string", "format": "date-time" }
+                    }
+                  }
+                },
+                "example": [
+                  { "temp": 29.3, "status": "normal", "timestamp": "2025-11-19T14:10:00Z" },
+                  { "temp": 30.1, "status": "moderado", "timestamp": "2025-11-19T14:12:00Z" },
+                  { "temp": 32.5, "status": "alto", "timestamp": "2025-11-19T14:14:00Z" }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alerta/email": {
+      "post": {
+        "summary": "Enviar e-mail manual",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "subject": { "type": "string", "example": "Alerta de Temperatura" },
+                  "message": { "type": "string", "example": "Temperatura passou do limite." }
+                },
+                "required": ["message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Email enviado", "content": { "application/json": { "example": { "sent": true } } } },
+          "400": { "description": "Mensagem ausente" }
+        }
+      }
+    },
+    "/alerta/whatsapp": {
+      "post": {
+        "summary": "Enviar WhatsApp manual",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": { "type": "string", "example": "Temperatura critica: 32.5°C" }
+                },
+                "required": ["message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Mensagem enviada", "content": { "application/json": { "example": { "sent": true } } } },
+          "400": { "description": "Mensagem ausente" }
+        }
+      }
+    },
+    "/status": {
+      "get": {
+        "summary": "Healthcheck",
+        "responses": {
+          "200": {
+            "description": "Status da API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "api": { "type": "string", "example": "online" },
+                    "uptime": { "type": "integer", "example": 10233 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
