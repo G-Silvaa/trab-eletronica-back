@@ -2,7 +2,6 @@
 
 const missingCreds = !process.env.EMAIL_USER || !process.env.EMAIL_PASS;
 
-// Basic Gmail transport. Adjust host/port if you use another provider.
 const transporter = missingCreds
   ? null
   : nodemailer.createTransport({

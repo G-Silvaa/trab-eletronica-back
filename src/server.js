@@ -3,21 +3,18 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
-// Carrega o .env antes de importar serviços que usam process.env
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerDoc = require('../docs/swagger.json');
 const emailService = require('./services/email');
-// WhatsApp desativado; reative importando o serviço e ajustando .env se necessário.
-// const whatsappService = require('./services/whatsapp');
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const TEMP_LIMIT = parseFloat(process.env.TEMP_LIMIT || '30');
 
-// Simple in-memory storage. For production, swap with SQLite or other DB.
-let currentReading = null; // { temp, status, timestamp }
+let currentReading = null; 
 const history = [];
 
 app.use(cors());
@@ -50,15 +47,11 @@ app.post('/temperatura', async (req, res) => {
     currentReading = entry;
     history.push({ temp: entry.temp, status: entry.status, timestamp: entry.timestamp });
 
-    // Fire-and-forget alerts; eles registram falha internamente.
+    
     if (temp > TEMP_LIMIT) {
       emailService
         .sendTemperatureAlert(entry)
         .catch((err) => console.error('Falha ao enviar alerta de e-mail:', err.message));
-      // WhatsApp desativado; reative se precisar:
-      // whatsappService
-      //   .sendWhatsAppAlert(entry)
-      //   .catch((err) => console.error('Falha ao enviar alerta de WhatsApp:', err.message));
     }
 
     return res.json({ ok: true });
@@ -99,7 +92,7 @@ app.post('/alerta/whatsapp', async (req, res) => {
     if (!message) {
       return res.status(400).json({ error: 'Campo \"message\" eh obrigatorio.' });
     }
-    // WhatsApp desativado; responda como não suportado.
+   
     return res.status(501).json({ error: 'WhatsApp desativado' });
   } catch (e) {
     console.error(e);
